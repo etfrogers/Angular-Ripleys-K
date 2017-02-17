@@ -7,35 +7,26 @@ maxval = double(intmax(class(img)));
 figure(1)
 imshow(img)
 img = double(img);
-angleInc = 360/72;
-rad = 10;
-angles = 0:angleInc:360-angleInc;
+angleInc = 360/36;
+rad = 20;
+angles = 0:angleInc:180-angleInc;
 nAngles =length(angles);
 assert(~mod(nAngles,2))
 
 filterImgs = zeros([nAngles, size(img)]);
-figure(2)
 for ii = 1:nAngles
-    strel = MakeSegment(angles(ii), angleInc, rad);
-    filterImgs(ii,:,:) = imfilter(img, strel,'replicate');
+    se = MakeSegment(angles(ii), angleInc, rad);
+%     se = strel('line',rad,angles(ii));
+%     se = double(se.Neighborhood);
+%     se = se./sum(se(:));
+    filterImgs(ii,:,:) = imfilter(img, se,'replicate');
+    figure(2)
     imagesc(squeeze(filterImgs(ii,:,:)))
     drawnow
     caxis([0,255])
 end
 %%
-symImgs = zeros([nAngles/2, size(img)]);
-figure(3)
-for ii = 1:nAngles/2
-%     symImgs(ii,:,:) = filterImgs(ii,:,:) .* filterImgs(ii+nAngles/2,:,:)./(maxval.^2);
-    symImgs(ii,:,:) = filterImgs(ii,:,:) + filterImgs(ii+nAngles/2,:,:) ./...
-                      (abs(filterImgs(ii,:,:) - filterImgs(ii+nAngles/2,:,:))+1);
-    
-    imagesc(squeeze(symImgs(ii,:,:)))
-    caxis([0,300])
-    drawnow
-end
-%%
-[linearity, direcInd] = max(symImgs);
+[linearity, direcInd] = max(filterImgs);
 linearity = squeeze(linearity);
 direcInd = squeeze(direcInd);
 direc = angles(direcInd);
@@ -91,7 +82,10 @@ imshow(rgb_data)
 % axis image
 % colorbar    
 
-thresh = graythresh(linearity);
+% thresh = graythresh(linearity);
+thresh = max(linearity(:))./2;
+thresh = 80;
+
 roi = imbinarize(linearity, thresh);
 subplot(2,3,5)
 imagesc(linearity./(img+128))
